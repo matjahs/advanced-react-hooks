@@ -7,19 +7,28 @@ interface State {
   count: number
 }
 
-type UpdateFn = (arg: State) => State;
+type Action = {
+  type: "INCREMENT";
+  step: number;
+}
 
-function countReducer(prevState: State, state: State | UpdateFn) {
-  return typeof state === "function" ? state(prevState) : state;
+function countReducer(state: State, action: Action) {
+  if(action.type === "INCREMENT") {
+    return {
+      ...state,
+      count: state.count + action.step
+    }
+  }
+
+  throw new Error(`ERROR: unknown action type: ${action.type}`);
 }
 
 function Counter({ initialCount = 0, step = 1 }) {
-  const [state, setState] = React.useReducer(countReducer, {
+  const [state, dispatch] = React.useReducer(countReducer, {
     count: initialCount,
   })
   const {count} = state
-  const increment = () =>
-    setState(currentState => ({count: currentState.count + step}))
+  const increment = () => dispatch({type: 'INCREMENT', step})
 
   return <button onClick={increment}>{count}</button>;
 }
