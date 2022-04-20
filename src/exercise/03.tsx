@@ -1,7 +1,7 @@
 // useContext: simple Counter
-// http://localhost:3000/isolated/exercise/03.js
+// http://localhost:3000/isolated/exercise/03.tsx
 
-import * as React from 'react'
+import * as React from "react";
 
 // 🐨 create your CountContext here with React.createContext
 
@@ -13,28 +13,28 @@ import * as React from 'react'
 
 function CountDisplay() {
   // 🐨 get the count from useContext with the CountContext
-  const count = 0
-  return <div>{`The current count is ${count}`}</div>
+  const count = 0;
+  return <div>{`The current count is ${count}`}</div>;
 }
 
 function Counter() {
   // 🐨 get the setCount from useContext with the CountContext
-  const setCount = () => {}
-  const increment = () => setCount(c => c + 1)
-  return <button onClick={increment}>Increment count</button>
+  const setCount: any = () => {};
+  const increment = () => setCount((c: any) => c + 1);
+  return <button onClick={increment}>Increment count</button>;
 }
 
 function App() {
   return (
     <div>
       {/*
-        🐨 wrap these two components in the CountProvider so they can access
-        the CountContext value
-      */}
+       🐨 wrap these two components in the CountProvider so they can access
+       the CountContext value
+       */}
       <CountDisplay />
       <Counter />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
