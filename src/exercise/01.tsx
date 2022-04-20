@@ -4,7 +4,7 @@
 import * as React from "react";
 
 interface State {
-  count: number;
+  count: number
 }
 
 type UpdateFn = (arg: State) => State;
