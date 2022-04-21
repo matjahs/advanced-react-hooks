@@ -16,6 +16,10 @@ interface State {
   error: Error | null
 }
 
+interface UseAsyncResult extends State {
+  run: any;
+}
+
 type Action =
   | {type: 'idle'}
   | {type: 'pending'}
@@ -23,7 +27,7 @@ type Action =
   | {type: 'rejected'; error: Error}
 
 function asyncReducer(state: State, action: Action): State {
-  switch (action.type) {
+  switch(action.type) {
     case 'pending': {
       return {status: 'pending', data: null, error: null}
     }
@@ -40,10 +44,8 @@ function asyncReducer(state: State, action: Action): State {
 }
 
 function useAsync(
-  asyncCallback: Function,
-  initialState: Partial<State> = {},
-  dependencies?: any[],
-): State {
+  initialState: Partial<State> = {}
+): UseAsyncResult {
   const [state, dispatch] = React.useReducer(asyncReducer, {
     status: 'idle',
     data: null,
@@ -51,9 +53,8 @@ function useAsync(
     ...initialState,
   })
 
-  React.useEffect(() => {
-    const promise = asyncCallback()
-    if (!promise) {
+  const run = React.useCallback((promise: Promise<any>) => {
+    if(!promise) {
       return
     }
 
@@ -66,33 +67,29 @@ function useAsync(
         dispatch({type: 'rejected', error})
       },
     )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies)
+  }, []);
 
-  return state
+  return {...state, run}
 }
 
 function PokemonInfo({pokemonName}: any) {
-  const asyncCallback = React.useCallback(() => {
-    if (!pokemonName) {
-      return
-    }
-    return fetchPokemon(pokemonName)
-  }, [pokemonName])
-
   const {
     data: pokemon,
     status,
     error,
-  } = useAsync(
-    asyncCallback,
-    {
-      status: pokemonName ? 'pending' : 'idle',
-    },
-    [asyncCallback],
-  )
+    run,
+  } = useAsync({status: pokemonName ? 'pending' : 'idle'});
 
-  switch (status) {
+  React.useEffect(() => {
+    if(!pokemonName) {
+      return;
+    }
+
+    const pokemonPromise = fetchPokemon(pokemonName);
+    run(pokemonPromise);
+  }, [pokemonName, run])
+
+  switch(status) {
     case 'idle':
       return <span>Submit a pokemon</span>
     case 'pending':
@@ -118,10 +115,10 @@ function App() {
   }
 
   return (
-    <div className="pokemon-info-app">
+    <div className='pokemon-info-app'>
       <PokemonForm pokemonName={pokemonName} onSubmit={handleSubmit} />
       <hr />
-      <div className="pokemon-info">
+      <div className='pokemon-info'>
         <PokemonErrorBoundary onReset={handleReset} resetKeys={[pokemonName]}>
           <PokemonInfo pokemonName={pokemonName} />
         </PokemonErrorBoundary>
@@ -136,7 +133,7 @@ function AppWithUnmountCheckbox() {
     <div>
       <label>
         <input
-          type="checkbox"
+          type='checkbox'
           checked={mountApp}
           onChange={e => setMountApp(e.target.checked)}
         />{' '}
