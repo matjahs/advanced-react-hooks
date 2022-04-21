@@ -26,8 +26,31 @@ type Action =
   | {type: 'resolved'; data: any}
   | {type: 'rejected'; error: Error}
 
+function useSafeDispatch(
+  dispatch: React.Dispatch<Action>,
+): React.Dispatch<Action> {
+  const mountedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  return React.useCallback(
+    (action: Action) => {
+      if (mountedRef.current) {
+        dispatch(action);
+      }
+    },
+    [dispatch],
+  );
+}
+
 function asyncReducer(state: State, action: Action): State {
-  switch(action.type) {
+  switch (action.type) {
     case 'pending': {
       return {status: 'pending', data: null, error: null}
     }
@@ -43,18 +66,18 @@ function asyncReducer(state: State, action: Action): State {
   }
 }
 
-function useAsync(
-  initialState: Partial<State> = {}
-): UseAsyncResult {
-  const [state, dispatch] = React.useReducer(asyncReducer, {
-    status: 'idle',
+function useAsync(initialState: Partial<State> = {}): UseAsyncResult {
+  const [state, unsafeDispatch] = React.useReducer(asyncReducer, {
+    status: "idle",
     data: null,
     error: null,
     ...initialState,
-  })
+  });
+
+  const dispatch = useSafeDispatch(unsafeDispatch);
 
   const run = React.useCallback((promise: Promise<any>) => {
-    if(!promise) {
+    if (!promise) {
       return
     }
 
@@ -66,8 +89,8 @@ function useAsync(
       (error: any) => {
         dispatch({type: 'rejected', error})
       },
-    )
-  }, []);
+    );
+  }, [dispatch]);
 
   return {...state, run}
 }
@@ -81,7 +104,7 @@ function PokemonInfo({pokemonName}: any) {
   } = useAsync({status: pokemonName ? 'pending' : 'idle'});
 
   React.useEffect(() => {
-    if(!pokemonName) {
+    if (!pokemonName) {
       return;
     }
 
@@ -89,7 +112,7 @@ function PokemonInfo({pokemonName}: any) {
     run(pokemonPromise);
   }, [pokemonName, run])
 
-  switch(status) {
+  switch (status) {
     case 'idle':
       return <span>Submit a pokemon</span>
     case 'pending':
