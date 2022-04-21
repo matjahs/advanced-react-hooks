@@ -69,12 +69,14 @@ function useAsync(fn: Function, dependencies: any[]): State {
 }
 
 function PokemonInfo({ pokemonName }: any) {
-  const state = useAsync(() => {
-    if (!pokemonName) {
-      return
+  const asyncCallback = React.useCallback(() => {
+    if(!pokemonName) {
+      return;
     }
-    return fetchPokemon(pokemonName)
-  }, [pokemonName])
+    return fetchPokemon(pokemonName);
+  }, [pokemonName]);
+
+  const state = useAsync(asyncCallback, [asyncCallback])
 
   const { data, status, error } = state;
 
