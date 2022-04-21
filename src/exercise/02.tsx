@@ -1,51 +1,55 @@
 // useCallback: custom hooks
 // http://localhost:3000/isolated/exercise/02.tsx
 
-import * as React from "react";
+import * as React from 'react'
 import {
   fetchPokemon,
   PokemonForm,
   PokemonDataView,
   PokemonInfoFallback,
-  PokemonErrorBoundary
-} from "../pokemon";
+  PokemonErrorBoundary,
+} from '../pokemon'
 
 interface State {
-  status: "idle" | "pending" | "resolved" | "rejected";
-  data: any;
-  error: Error | null;
+  status: 'idle' | 'pending' | 'resolved' | 'rejected'
+  data: any
+  error: Error | null
 }
 
 type Action =
-  | {type: "idle"}
-  | {type: "pending"}
-  | {type: "resolved", data: any}
-  | {type: "rejected", error: Error};
+  | {type: 'idle'}
+  | {type: 'pending'}
+  | {type: 'resolved'; data: any}
+  | {type: 'rejected'; error: Error}
 
 function asyncReducer(state: State, action: Action): State {
-  switch(action.type) {
-    case "pending": {
-      return { status: "pending", data: null, error: null };
+  switch (action.type) {
+    case 'pending': {
+      return {status: 'pending', data: null, error: null}
     }
-    case "resolved": {
-      return { status: "resolved", data: action.data, error: null };
+    case 'resolved': {
+      return {status: 'resolved', data: action.data, error: null}
     }
-    case "rejected": {
-      return { status: "rejected", data: null, error: action.error };
+    case 'rejected': {
+      return {status: 'rejected', data: null, error: action.error}
     }
     default: {
-      throw new Error(`Unhandled action type: ${action.type}`);
+      throw new Error(`Unhandled action type: ${action.type}`)
     }
   }
 }
 
-function useAsync(asyncCallback: Function, initialState: Partial<State> = {}, dependencies?: any[]): State {
+function useAsync(
+  asyncCallback: Function,
+  initialState: Partial<State> = {},
+  dependencies?: any[],
+): State {
   const [state, dispatch] = React.useReducer(asyncReducer, {
-    status: "idle",
+    status: 'idle',
     data: null,
     error: null,
-    ...initialState
-  });
+    ...initialState,
+  })
 
   React.useEffect(() => {
     const promise = asyncCallback()
@@ -53,58 +57,64 @@ function useAsync(asyncCallback: Function, initialState: Partial<State> = {}, de
       return
     }
 
-    dispatch({ type: "pending" });
+    dispatch({type: 'pending'})
     promise.then(
       (data: any) => {
-        dispatch({ type: "resolved", data });
+        dispatch({type: 'resolved', data})
       },
       (error: any) => {
-        dispatch({ type: "rejected", error });
-      }
-    );
+        dispatch({type: 'rejected', error})
+      },
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies);
+  }, dependencies)
 
-  return state;
+  return state
 }
 
-function PokemonInfo({ pokemonName }: any) {
+function PokemonInfo({pokemonName}: any) {
   const asyncCallback = React.useCallback(() => {
-    if(!pokemonName) {
-      return;
+    if (!pokemonName) {
+      return
     }
-    return fetchPokemon(pokemonName);
-  }, [pokemonName]);
+    return fetchPokemon(pokemonName)
+  }, [pokemonName])
 
-  const state = useAsync(asyncCallback, {
-    status: pokemonName ? "pending" : "idle"
-  }, [asyncCallback])
+  const {
+    data: pokemon,
+    status,
+    error,
+  } = useAsync(
+    asyncCallback,
+    {
+      status: pokemonName ? 'pending' : 'idle',
+    },
+    [asyncCallback],
+  )
 
-  const { data: pokemon, status, error } = state;
-
-  switch(status) {
-    case "idle":
-      return <span>Submit a pokemon</span>;
-    case "pending":
-      return <PokemonInfoFallback name={pokemonName} />;
-    case "rejected":
-      throw error;
-    case "resolved":
-      return <PokemonDataView pokemon={pokemon} />;
+  switch (status) {
+    case 'idle':
+      return <span>Submit a pokemon</span>
+    case 'pending':
+      return <PokemonInfoFallback name={pokemonName} />
+    case 'rejected':
+      throw error
+    case 'resolved':
+      return <PokemonDataView pokemon={pokemon} />
     default:
-      throw new Error("This should be impossible");
+      throw new Error('This should be impossible')
   }
 }
 
 function App() {
-  const [pokemonName, setPokemonName] = React.useState("");
+  const [pokemonName, setPokemonName] = React.useState('')
 
   function handleSubmit(newPokemonName: any) {
-    setPokemonName(newPokemonName);
+    setPokemonName(newPokemonName)
   }
 
   function handleReset() {
-    setPokemonName("");
+    setPokemonName('')
   }
 
   return (
@@ -117,11 +127,11 @@ function App() {
         </PokemonErrorBoundary>
       </div>
     </div>
-  );
+  )
 }
 
 function AppWithUnmountCheckbox() {
-  const [mountApp, setMountApp] = React.useState(true);
+  const [mountApp, setMountApp] = React.useState(true)
   return (
     <div>
       <label>
@@ -129,13 +139,13 @@ function AppWithUnmountCheckbox() {
           type="checkbox"
           checked={mountApp}
           onChange={e => setMountApp(e.target.checked)}
-        />{" "}
+        />{' '}
         Mount Component
       </label>
       <hr />
       {mountApp ? <App /> : null}
     </div>
-  );
+  )
 }
 
-export default AppWithUnmountCheckbox;
+export default AppWithUnmountCheckbox
